@@ -29,7 +29,7 @@ public class SchedulePlanner
             lastError = "Patient or doctor not found";
             return null;
         }
-        if (day.Date < DateTime.Today || IsOnHoliday(doctorId, day))
+        if (day.Date < Now().Date || IsOnHoliday(doctorId, day))
         {
             lastError = "Date is in the past or doctor is on holiday";
             return null;
@@ -52,8 +52,8 @@ public class SchedulePlanner
         DateTime to = day.Date.AddHours(d.EndHour);
         if (!urgent)
             to = to.AddMinutes(-30); // остання година - для термінових
-        if (day.Date == DateTime.Today && from < DateTime.Now)
-            from = DateTime.Today.AddHours(DateTime.Now.Hour + 1);
+        if (day.Date == Now().Date && from < Now())
+            from = Now().Date.AddHours(Now().Hour + 1);
         foundAt = DateTime.MinValue;
         // перебір слотів по 5 хв: вільні і лікар, і пацієнт
         for (DateTime t = from; t.AddMinutes(len) <= to; t = t.AddMinutes(5))
@@ -101,6 +101,9 @@ public class SchedulePlanner
         AuditLog.Write("BOOK #" + ap.Id + " patient " + patientId + " doctor " + doctorId);
         return ap;
     }
+
+    // шов для тестів: поточний час можна підмінити в нащадку
+    protected virtual DateTime Now() { return DateTime.Now; }
 
     public string GetLastError() { return lastError; }
     public List<string> GetOutbox() { return outbox; }
