@@ -35,7 +35,7 @@ public class SchedulePlanner
             lastError = "Patient or doctor not found";
             return null;
         }
-        if (day.Date < Now().Date || IsOnHoliday(doctorId, day))
+        if (!IsBookableDay(doctorId, day))
         {
             lastError = "Date is in the past or doctor is on holiday";
             return null;
@@ -105,6 +105,12 @@ public class SchedulePlanner
         SendSms(p.Phone, formatSms(ap, p, d));
         AuditLog.Write("BOOK #" + ap.Id + " patient " + patientId + " doctor " + doctorId);
         return ap;
+    }
+
+    // день не в минулому і лікар не у відпустці
+    private bool IsBookableDay(int doctorId, DateTime day)
+    {
+        return day.Date >= Now().Date && !IsOnHoliday(doctorId, day);
     }
 
     // шов для тестів: поточний час можна підмінити в нащадку
