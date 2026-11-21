@@ -59,9 +59,9 @@ public class SchedulePlannerServicesTests
     [InlineData("+380931112233", "+380931112233")]
     [InlineData("12345", "")]
     [InlineData(null, "")]
-    public void NormPhone_Formats_ReturnsInternationalOrEmpty(string? phone, string expected)
+    public void NormalizePhone_Formats_ReturnsInternationalOrEmpty(string? phone, string expected)
     {
-        Assert.Equal(expected, _planner.normPhone(phone));
+        Assert.Equal(expected, _planner.NormalizePhone(phone));
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class SchedulePlannerServicesTests
         Console.SetOut(output);
         try
         {
-            _planner.print_stats();
+            _planner.PrintStats();
         }
         finally
         {

@@ -45,7 +45,7 @@ public class Program
         Console.WriteLine(planner.BuildDayReport(1, day));
         Console.WriteLine("Load: dr1 " + planner.GetLoadPercent(1, day) + "%, dr3 "
             + planner.GetLoadPercent(3, day) + "%, dr9 " + planner.GetLoadPercent(9, day));
-        planner.print_stats();
+        planner.PrintStats();
     }
 
     private static Appointment Book(SchedulePlanner planner, int patientId, int doctorId,

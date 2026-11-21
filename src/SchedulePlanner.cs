@@ -97,8 +97,8 @@ public class SchedulePlanner
         ap.Status = AppointmentStatus.Booked;
         ap.Fee = fees.CalcFee(ap, p);
         repo.Appointments.Add(ap);
-        count_stats(ap);
-        SendSms(p.Phone, formatSms(ap, p, d));
+        CountStats(ap);
+        SendSms(p.Phone, FormatSms(ap, p, d));
         AuditLog.Write("BOOK #" + ap.Id + " patient " + patientId + " doctor " + doctorId);
         return ap;
     }
@@ -176,7 +176,7 @@ public class SchedulePlanner
         return holidays.RemoveAll(h => h.StartsWith(doctorId + "|"));
     }
 
-    public string formatSms(Appointment a, Patient p, Doctor d)
+    public string FormatSms(Appointment a, Patient p, Doctor d)
     {
         string vt;
         switch (a.VisitType)
@@ -193,7 +193,7 @@ public class SchedulePlanner
 
     public bool SendSms(string phone, string text)
     {
-        string to = normPhone(phone);
+        string to = NormalizePhone(phone);
         if (!SmsEnabled || to == "")
             return false;
         smsCounter++;
@@ -204,7 +204,7 @@ public class SchedulePlanner
     }
 
     // 067 123 45 67 / (067)123-45-67 / 380671234567 -> +380671234567
-    public string normPhone(string phone)
+    public string NormalizePhone(string phone)
     {
         if (phone == null)
             return "";
@@ -218,7 +218,7 @@ public class SchedulePlanner
         return "";
     }
 
-    private void count_stats(Appointment ap)
+    private void CountStats(Appointment ap)
     {
         bookedCount++;
         if (ap.Urgent)
@@ -281,7 +281,7 @@ public class SchedulePlanner
             + d.StartHour + ":00-" + d.EndHour + ":00";
     }
 
-    public void print_stats()
+    public void PrintStats()
     {
         Console.WriteLine("Booked: " + bookedCount + ", urgent: " + urgentCount
             + ", failed: " + failedCount);
