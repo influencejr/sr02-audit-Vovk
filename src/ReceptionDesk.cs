@@ -11,13 +11,20 @@ public class ReceptionDesk
     {
         LastMessage = "";
         if (fullName == null || fullName.Trim().Length < 3)
+        {
             LastMessage = "Name is too short";
-        else if (phone == null || phone.Length < 10)
-            LastMessage = "Phone number is too short";
-        else if (birthYear < 1900 || birthYear > DateTime.Now.Year)
-            LastMessage = "Wrong birth year";
-        if (LastMessage != "")
             return -1;
+        }
+        if (phone == null || phone.Length < 10)
+        {
+            LastMessage = "Phone number is too short";
+            return -1;
+        }
+        if (birthYear < 1900 || birthYear > DateTime.Now.Year)
+        {
+            LastMessage = "Wrong birth year";
+            return -1;
+        }
         Patient p = new Patient { Id = repo.Patients.Count + 1, FullName = fullName.Trim(),
             Phone = phone, BirthYear = birthYear, InsuranceNo = insuranceNo, Email = email };
         repo.Patients.Add(p);
