@@ -3,6 +3,12 @@ namespace ClinicReception;
 // Розклад. Сюди ж смс, відпустки лікарів, статистика
 public class SchedulePlanner
 {
+    private const int SlotStepMinutes = 5;
+    private const int LunchHour = 13;
+    private const int MinutesPerHour = 60;
+    private const int UrgentReserveMinutes = 30;
+    private const int PatientGapMinutes = 30;
+
     private ClinicRepository repo = ClinicRepository.Current;
     private FeeCalculator fees = new FeeCalculator();
     private string lastError = "";
@@ -51,15 +57,15 @@ public class SchedulePlanner
         DateTime from = day.Date.AddHours(d.StartHour);
         DateTime to = day.Date.AddHours(d.EndHour);
         if (!urgent)
-            to = to.AddMinutes(-30); // остання година - для термінових
+            to = to.AddMinutes(-UrgentReserveMinutes); // останні пів години - для термінових
         if (day.Date == Now().Date && from < Now())
             from = Now().Date.AddHours(Now().Hour + 1);
         foundAt = DateTime.MinValue;
         // перебір слотів по 5 хв: вільні і лікар, і пацієнт
-        for (DateTime t = from; t.AddMinutes(len) <= to; t = t.AddMinutes(5))
+        for (DateTime t = from; t.AddMinutes(len) <= to; t = t.AddMinutes(SlotStepMinutes))
         {
-            if (t.Hour == 13)
-                continue; // обід
+            if (t.Hour == LunchHour)
+                continue;
             bool ok = true;
             foreach (Appointment a in dayList)
             {
@@ -74,8 +80,7 @@ public class SchedulePlanner
             }
             foreach (Appointment a in mine)
             {
-                // між візитами пацієнта мінімум 30 хв
-                if (Math.Abs((a.Start - t).TotalMinutes) < 30)
+                if (Math.Abs((a.Start - t).TotalMinutes) < PatientGapMinutes)
                     ok = false;
             }
             if (ok)
@@ -259,9 +264,9 @@ public class SchedulePlanner
         Doctor d = repo.FindDoctor(doctorId);
         if (d == null)
             return -1;
-        int total = (d.EndHour - d.StartHour) * 60;
-        if (d.StartHour < 13 && d.EndHour > 13)
-            total = total - 60;
+        int total = (d.EndHour - d.StartHour) * MinutesPerHour;
+        if (d.StartHour < LunchHour && d.EndHour > LunchHour)
+            total = total - MinutesPerHour;
         int busy = 0;
         foreach (Appointment a in GetDoctorDay(doctorId, day))
             busy += a.Minutes;
