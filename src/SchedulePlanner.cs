@@ -12,7 +12,7 @@ public class SchedulePlanner
     private ClinicRepository repo = ClinicRepository.Current;
     private FeeCalculator fees = new FeeCalculator();
     private string lastError = "";
-    private List<string> holidays = new List<string>(); // "doctorId|from|to"
+    private List<Holiday> holidays = new List<Holiday>();
     private int bookedCount = 0;
     private int urgentCount = 0;
     private int failedCount = 0;
@@ -142,31 +142,19 @@ public class SchedulePlanner
     {
         if (to < from)
             return false;
-        holidays.Add(doctorId + "|" + from.ToString("yyyy-MM-dd") + "|"
-            + to.ToString("yyyy-MM-dd"));
+        holidays.Add(new Holiday(doctorId, from.Date, to.Date));
         AuditLog.Write("HOLIDAY doctor " + doctorId);
         return true;
     }
 
     public bool IsOnHoliday(int doctorId, DateTime day)
     {
-        foreach (string h in holidays)
-        {
-            string[] parts = h.Split('|');
-            try
-            {
-                if (int.Parse(parts[0]) == doctorId && day.Date >= DateTime.Parse(parts[1])
-                    && day.Date < DateTime.Parse(parts[2]))
-                    return true;
-            }
-            catch { }
-        }
-        return false;
+        return holidays.Any(h => h.Covers(doctorId, day));
     }
 
     public int CancelHolidays(int doctorId)
     {
-        return holidays.RemoveAll(h => h.StartsWith(doctorId + "|"));
+        return holidays.RemoveAll(h => h.DoctorId == doctorId);
     }
 
     private void CountStats(Appointment ap)
