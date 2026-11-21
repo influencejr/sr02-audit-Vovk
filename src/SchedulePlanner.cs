@@ -69,13 +69,11 @@ public class SchedulePlanner
             bool ok = true;
             foreach (Appointment a in dayList)
             {
-                if (a.Start < t.AddMinutes(len))
+                bool overlapsDoctorVisit = a.Start < t.AddMinutes(len) && t < a.Start.AddMinutes(a.Minutes);
+                if (overlapsDoctorVisit)
                 {
-                    if (t < a.Start.AddMinutes(a.Minutes))
-                    {
-                        ok = false;
-                        break;
-                    }
+                    ok = false;
+                    break;
                 }
             }
             foreach (Appointment a in mine)
