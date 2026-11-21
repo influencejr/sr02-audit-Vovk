@@ -184,7 +184,7 @@ public class SchedulePlanner
         if (d == null)
             return "";
         List<Appointment> dayList = GetDoctorDay(doctorId, day);
-        string r = "Day report: " + DescribeDoctor(d) + "\n";
+        string r = "Day report: " + d.Describe() + "\n";
         int mins = 0;
         foreach (Appointment a in dayList)
         {
@@ -208,12 +208,6 @@ public class SchedulePlanner
         foreach (Appointment a in GetDoctorDay(doctorId, day))
             busy += a.Minutes;
         return busy * 100 / total;
-    }
-
-    public string DescribeDoctor(Doctor d)
-    {
-        return "Dr. " + d.Name + " (" + d.Specialty + "), room " + d.Room + ", "
-            + d.StartHour + ":00-" + d.EndHour + ":00";
     }
 
     public void PrintStats()

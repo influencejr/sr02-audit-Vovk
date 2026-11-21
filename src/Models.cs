@@ -21,6 +21,12 @@ public class Doctor
     public int Room { get; set; }
     public int StartHour { get; set; }
     public int EndHour { get; set; }
+
+    public string Describe()
+    {
+        return "Dr. " + Name + " (" + Specialty + "), room " + Room + ", "
+            + StartHour + ":00-" + EndHour + ":00";
+    }
 }
 
 public class Appointment
