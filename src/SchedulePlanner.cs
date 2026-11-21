@@ -1,6 +1,6 @@
 namespace ClinicReception;
 
-// Розклад. Сюди ж смс, відпустки лікарів, статистика
+// Розклад: пошук вільного часу, відпустки лікарів, звіт і статистика
 public class SchedulePlanner
 {
     private const int SlotStepMinutes = 5;
@@ -13,14 +13,13 @@ public class SchedulePlanner
     private FeeCalculator fees = new FeeCalculator();
     private string lastError = "";
     private List<string> holidays = new List<string>(); // "doctorId|from|to"
-    private string clinicName = "City Clinic #3";
-    public static bool SmsEnabled = true;
-    private static int smsCounter = 0;
-    private List<string> outbox = new List<string>();
     private int bookedCount = 0;
     private int urgentCount = 0;
     private int failedCount = 0;
     private Dictionary<string, int> perType = new Dictionary<string, int>();
+
+    // повідомлення пацієнтам про запис
+    public SmsNotifier Sms { get; } = new SmsNotifier();
 
     // Повертає null, причину див. у GetLastError()
     public Appointment Book(int patientId, int doctorId, string visitType, DateTime day,
@@ -54,7 +53,7 @@ public class SchedulePlanner
         ap.Fee = fees.CalcFee(ap, p);
         repo.Appointments.Add(ap);
         CountStats(ap);
-        SendSms(p.Phone, FormatSms(ap, p, d));
+        Sms.SendSms(p.Phone, Sms.FormatSms(ap, p, d));
         AuditLog.Write("BOOK #" + ap.Id + " patient " + patientId + " doctor " + doctorId);
         return ap;
     }
@@ -110,10 +109,7 @@ public class SchedulePlanner
     protected virtual DateTime Now() { return DateTime.Now; }
 
     public string GetLastError() { return lastError; }
-    public List<string> GetOutbox() { return outbox; }
-    public int GetSmsCount() { return smsCounter; }
     public int GetBookedCount() { return bookedCount; }
-    public void ClearOutbox() { outbox.Clear(); }
 
     public List<Appointment> GetDoctorDay(int doctorId, DateTime day)
     {
@@ -173,40 +169,6 @@ public class SchedulePlanner
         return holidays.RemoveAll(h => h.StartsWith(doctorId + "|"));
     }
 
-    public string FormatSms(Appointment a, Patient p, Doctor d)
-    {
-        string vt = VisitTypes.Of(a.VisitType).Name;
-        return clinicName + ": " + p.FullName + ", " + vt + " with Dr. " + d.Name + " at "
-            + a.Start.ToString("HH:mm") + ", room " + d.Room + (a.Urgent ? " (URGENT)" : "");
-    }
-
-    public bool SendSms(string phone, string text)
-    {
-        string to = NormalizePhone(phone);
-        if (!SmsEnabled || to == "")
-            return false;
-        smsCounter++;
-        outbox.Add(to + ": " + text);
-        // TODO: підключити шлюз, поки що в консоль
-        Console.WriteLine("  [SMS " + smsCounter + " -> " + to + "] " + text);
-        return true;
-    }
-
-    // 067 123 45 67 / (067)123-45-67 / 380671234567 -> +380671234567
-    public string NormalizePhone(string phone)
-    {
-        if (phone == null)
-            return "";
-        string s = phone.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
-        if (s.StartsWith("+"))
-            return s;
-        if (s.StartsWith("380"))
-            return "+" + s;
-        if (s.StartsWith("0") && s.Length == 10)
-            return "+38" + s;
-        return "";
-    }
-
     private void CountStats(Appointment ap)
     {
         bookedCount++;
@@ -260,6 +222,6 @@ public class SchedulePlanner
             + ", failed: " + failedCount);
         foreach (KeyValuePair<string, int> kv in perType)
             Console.WriteLine("  " + kv.Key + " = " + kv.Value);
-        Console.WriteLine("SMS sent: " + smsCounter);
+        Console.WriteLine("SMS sent: " + Sms.GetSmsCount());
     }
 }

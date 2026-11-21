@@ -61,7 +61,7 @@ public class SchedulePlannerServicesTests
     [InlineData(null, "")]
     public void NormalizePhone_Formats_ReturnsInternationalOrEmpty(string? phone, string expected)
     {
-        Assert.Equal(expected, _planner.NormalizePhone(phone));
+        Assert.Equal(expected, _planner.Sms.NormalizePhone(phone));
     }
 
     [Fact]
@@ -72,21 +72,21 @@ public class SchedulePlannerServicesTests
         Assert.Equal(
             "+380671234567: City Clinic #3: Petro Ivanenko, consultation with Dr. Olena Shevchenko"
             + " at 08:00, room 12",
-            Assert.Single(_planner.GetOutbox()));
+            Assert.Single(_planner.Sms.GetOutbox()));
     }
 
     [Fact]
     public void SendSms_Disabled_ReturnsFalse()
     {
-        SchedulePlanner.SmsEnabled = false;
+        SmsNotifier.SmsEnabled = false;
         try
         {
-            Assert.False(_planner.SendSms("0671234567", "test"));
-            Assert.Empty(_planner.GetOutbox());
+            Assert.False(_planner.Sms.SendSms("0671234567", "test"));
+            Assert.Empty(_planner.Sms.GetOutbox());
         }
         finally
         {
-            SchedulePlanner.SmsEnabled = true;
+            SmsNotifier.SmsEnabled = true;
         }
     }
 
