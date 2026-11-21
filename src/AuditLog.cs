@@ -12,6 +12,8 @@ public class AuditLog
             string stamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             File.AppendAllText(FileName, stamp + " " + message + "\n");
         }
+        // TODO TD-03: порожній catch ховає недоступний журнал; потрібне повідомлення
+        // в Program, строк - тиждень 14
         catch
         {
         }

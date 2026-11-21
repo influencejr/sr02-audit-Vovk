@@ -72,6 +72,7 @@ public class ReceptionDesk
         if (!Transitions.TryGetValue((action, current), out AppointmentStatus next))
             return current;
         // неявку можна позначити лише після початку прийому
+        // TODO TD-04: системний годинник без шва, як і в FeeCalculator; строк - тиждень 14
         if (next == AppointmentStatus.NoShow && start >= DateTime.Now)
             return current;
         return next;

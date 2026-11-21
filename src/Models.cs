@@ -2,6 +2,8 @@ namespace ClinicReception;
 
 public enum AppointmentStatus { Booked, Confirmed, Completed, Cancelled, NoShow }
 
+// TODO TD-07: публічні поля Patient і Appointment змінює будь-хто; потрібні властивості
+// з перевірками, строк - тиждень 16
 public class Patient
 {
     public int Id;

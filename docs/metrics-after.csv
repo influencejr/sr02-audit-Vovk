@@ -1,0 +1,16 @@
+Class;Method;LOC;CC;Depth;Params;FanOut;File
+SchedulePlanner;FindFreeSlot;13;8;3;3;11;SchedulePlanner.cs
+ReceptionDesk;RegisterPatient;15;7;2;5;5;ReceptionDesk.cs
+FeeCalculator;CalcFee;10;6;2;2;3;FeeCalculator.cs
+SmsNotifier;NormalizePhone;10;6;2;1;4;SmsNotifier.cs
+ClinicRepository;FindForPatient;6;6;3;2;4;ClinicRepository.cs
+SchedulePlanner;Book;25;5;2;1;11;SchedulePlanner.cs
+ReceptionDesk;ChangeStatus;14;5;2;2;5;ReceptionDesk.cs
+SchedulePlanner;GetLoadPercent;10;5;2;2;11;SchedulePlanner.cs
+SchedulePlanner;GetDoctorDay;8;5;3;2;11;SchedulePlanner.cs
+SchedulePlanner;BuildDayReport;12;3;2;2;11;SchedulePlanner.cs
+SchedulePlanner;Reschedule;9;3;2;2;11;SchedulePlanner.cs
+Program;Book;8;3;2;6;6;Program.cs
+SmsNotifier;SendSms;7;3;2;2;4;SmsNotifier.cs
+Program;Step;6;3;2;3;6;Program.cs
+Program;Main;39;1;1;1;6;Program.cs

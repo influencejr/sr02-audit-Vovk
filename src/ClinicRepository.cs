@@ -3,6 +3,8 @@ namespace ClinicReception;
 // Поки без бази: одна копія на всю програму
 public class ClinicRepository
 {
+    // TODO TD-06: статичний спільний стан, тести не можуть іти паралельно;
+    // репозиторій має передаватися в конструктор, строк - тиждень 15
     public static ClinicRepository Current = new ClinicRepository();
     private static int lastId = 1000;
 

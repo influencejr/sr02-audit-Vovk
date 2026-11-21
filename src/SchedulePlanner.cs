@@ -21,7 +21,8 @@ public class SchedulePlanner
     // повідомлення пацієнтам про запис
     public SmsNotifier Sms { get; } = new SmsNotifier();
 
-    // Повертає null, причину див. у GetLastError()
+    // TODO TD-05: помилка повертається як null і GetLastError(), а не винятком чи Result;
+    // строк - тиждень 16, разом з викликачами в Program і ReceptionDesk
     public Appointment Book(BookingRequest request)
     {
         lastError = "";
@@ -41,6 +42,8 @@ public class SchedulePlanner
         DateTime? start = FindFreeSlot(d, request, len);
         if (start == null)
         {
+            // TODO TD-02: невдалі записи з інших причин (немає пацієнта, відпустка) не рахуються;
+            // строк - тиждень 13
             failedCount++;
             lastError = "No free slot for " + request.VisitType;
             return null;
@@ -78,6 +81,8 @@ public class SchedulePlanner
             from = Now().Date.AddHours(Now().Hour + 1);
         for (DateTime t = from; t.AddMinutes(len) <= to; t = t.AddMinutes(SlotStepMinutes))
         {
+            // TODO TD-01: обід перевіряється лише за годиною початку, процедура 12:40-13:20
+            // заходить на обід; потрібна перевірка перетину з інтервалом обіду, строк - тиждень 13
             if (t.Hour != LunchHour && IsDoctorFree(dayList, t, len) && IsPatientFree(mine, t))
                 return t;
         }

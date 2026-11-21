@@ -1,0 +1,39 @@
+=== City Clinic #3: reception desk demo ===
+Invalid patient -> -1 (Name is too short)
+--- Booking: tomorrow, then holiday, yesterday, unknown patient
+  [SMS 1 -> +380671234567] City Clinic #3: Petro Ivanenko, consultation with Dr. Olena Shevchenko at 08:00, room 12
+p1 -> dr1 CONS: #1001 at 08:00, 20 min, fee 283.50
+  [SMS 2 -> +380507654321] City Clinic #3: Maria Koval, procedure with Dr. Olena Shevchenko at 08:20, room 12
+p2 -> dr1 PROC: #1002 at 08:20, 40 min, fee 900.00
+  [SMS 3 -> +380671234567] City Clinic #3: Petro Ivanenko, follow-up with Dr. Taras Bondar at 08:30, room 21
+p1 -> dr2 FUP: #1003 at 08:30, 15 min, fee 189.00
+  [SMS 4 -> +380931112233] City Clinic #3: Andrii Tkachenko, visit with Dr. Olena Shevchenko at 09:00, room 12
+p3 -> dr1 XRAY: #1004 at 09:00, 20 min, fee 315.00
+p2 -> dr3 PROC: FAILED, No free slot for PROC
+  [SMS 5 -> +380507654321] City Clinic #3: Maria Koval, procedure with Dr. Iryna Melnyk at 15:00, room 7 (URGENT)
+p2 -> dr3 PROC!: #1005 at 15:00, 40 min, fee 1125.00
+p3 -> dr2 CONS: FAILED, Date is in the past or doctor is on holiday
+p3 -> dr1 FUP: FAILED, Date is in the past or doctor is on holiday
+p42 -> dr1 CONS: FAILED, Patient or doctor not found
+--- Status changes
+  confirm -> OK: Appointment #1001: Booked -> Confirmed
+  complete -> OK: Appointment #1001: Confirmed -> Completed
+  confirm -> REFUSED: Cannot confirm appointment #1001 in status Completed
+  cancel -> OK: Appointment #1002: Booked -> Cancelled
+  complete #1002 -> ERROR: Cannot complete a cancelled visit
+  confirm -> REFUSED: Appointment #777 not found
+--- Reschedule, invoice, end of day
+  [SMS 6 -> +380671234567] City Clinic #3: Petro Ivanenko, follow-up with Dr. Taras Bondar at 08:00, room 21
+Moved to #1006 at 08:00
+Invoice #1005: Maria Koval, procedure (urgent) - 1125.00 UAH
+Day report: Dr. Olena Shevchenko (therapist), room 12, 8:00-14:00
+  08:00 consultation, Petro Ivanenko [Completed]
+  09:00 visit, Andrii Tkachenko [Booked]
+  total: 2 visits, 40 min
+Load: dr1 13%, dr3 66%, dr9 -1
+Booked: 6, urgent: 1, failed: 1
+  CONS = 1
+  PROC = 2
+  FUP = 2
+  XRAY = 1
+SMS sent: 6

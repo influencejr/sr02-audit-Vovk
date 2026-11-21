@@ -15,6 +15,7 @@ public class FeeCalculator
         // страхова покриває 30%, пенсіонерам (65+) ще -10%
         if (p.InsuranceNo != null && p.InsuranceNo != "")
             fee = fee * 0.7m;
+        // TODO TD-04: вік за різницею років і системний годинник без шва; строк - тиждень 14
         if (DateTime.Now.Year - p.BirthYear >= 65)
             fee = fee - fee * 0.1m;
         return Math.Round(fee, 2);
