@@ -22,39 +22,38 @@ public class SchedulePlanner
     public SmsNotifier Sms { get; } = new SmsNotifier();
 
     // Повертає null, причину див. у GetLastError()
-    public Appointment Book(int patientId, int doctorId, string visitType, DateTime day,
-        bool urgent)
+    public Appointment Book(BookingRequest request)
     {
         lastError = "";
-        Patient p = repo.FindPatient(patientId);
-        Doctor d = repo.FindDoctor(doctorId);
+        Patient p = repo.FindPatient(request.PatientId);
+        Doctor d = repo.FindDoctor(request.DoctorId);
         if (p == null || d == null)
         {
             lastError = "Patient or doctor not found";
             return null;
         }
-        if (!IsBookableDay(doctorId, day))
+        if (!IsBookableDay(request.DoctorId, request.Day))
         {
             lastError = "Date is in the past or doctor is on holiday";
             return null;
         }
-        int len = VisitTypes.Of(visitType).Minutes;
-        DateTime? start = FindFreeSlot(d, patientId, day, len, urgent);
+        int len = VisitTypes.Of(request.VisitType).Minutes;
+        DateTime? start = FindFreeSlot(d, request, len);
         if (start == null)
         {
             failedCount++;
-            lastError = "No free slot for " + visitType;
+            lastError = "No free slot for " + request.VisitType;
             return null;
         }
-        Appointment ap = new Appointment { Id = ClinicRepository.NextId(), PatientId = patientId,
-            DoctorId = doctorId, VisitType = visitType, Start = start.Value, Minutes = len };
-        ap.Urgent = urgent;
+        Appointment ap = new Appointment { Id = ClinicRepository.NextId(), PatientId = request.PatientId,
+            DoctorId = request.DoctorId, VisitType = request.VisitType, Start = start.Value, Minutes = len };
+        ap.Urgent = request.Urgent;
         ap.Status = AppointmentStatus.Booked;
         ap.Fee = fees.CalcFee(ap, p);
         repo.Appointments.Add(ap);
         CountStats(ap);
         Sms.SendSms(p.Phone, Sms.FormatSms(ap, p, d));
-        AuditLog.Write("BOOK #" + ap.Id + " patient " + patientId + " doctor " + doctorId);
+        AuditLog.Write("BOOK #" + ap.Id + " patient " + request.PatientId + " doctor " + request.DoctorId);
         return ap;
     }
 
@@ -65,16 +64,17 @@ public class SchedulePlanner
     }
 
     // перший слот, вільний і для лікаря, і для пацієнта; null - вільного немає
-    private DateTime? FindFreeSlot(Doctor d, int patientId, DateTime day, int len, bool urgent)
+    private DateTime? FindFreeSlot(Doctor d, BookingRequest request, int len)
     {
-        List<Appointment> dayList = GetDoctorDay(d.Id, day);
+        List<Appointment> dayList = GetDoctorDay(d.Id, request.Day);
         // записи пацієнта на цей день (до всіх лікарів)
-        List<Appointment> mine = repo.FindForPatient(patientId, day);
-        DateTime from = day.Date.AddHours(d.StartHour);
-        DateTime to = day.Date.AddHours(d.EndHour);
-        if (!urgent)
+        List<Appointment> mine = repo.FindForPatient(request.PatientId, request.Day);
+        DateTime day = request.Day.Date;
+        DateTime from = day.AddHours(d.StartHour);
+        DateTime to = day.AddHours(d.EndHour);
+        if (!request.Urgent)
             to = to.AddMinutes(-UrgentReserveMinutes); // останні пів години - для термінових
-        if (day.Date == Now().Date && from < Now())
+        if (day == Now().Date && from < Now())
             from = Now().Date.AddHours(Now().Hour + 1);
         for (DateTime t = from; t.AddMinutes(len) <= to; t = t.AddMinutes(SlotStepMinutes))
         {
@@ -132,7 +132,7 @@ public class SchedulePlanner
             return null;
         AppointmentStatus was = old.Status;
         old.Status = AppointmentStatus.Cancelled;
-        Appointment n = Book(old.PatientId, old.DoctorId, old.VisitType, newDay, old.Urgent);
+        Appointment n = Book(new BookingRequest(old.PatientId, old.DoctorId, old.VisitType, newDay, old.Urgent));
         if (n == null)
             old.Status = was;
         return n;

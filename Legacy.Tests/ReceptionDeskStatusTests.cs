@@ -11,7 +11,7 @@ public class ReceptionDeskStatusTests
     {
         TestClinic.Fresh();
         _desk = new ReceptionDesk();
-        _appointment = new SchedulePlanner().Book(2, 1, "CONS", TestClinic.Tomorrow, false);
+        _appointment = new SchedulePlanner().Book(new BookingRequest(2, 1, "CONS", TestClinic.Tomorrow, false));
     }
 
     [Fact]

@@ -21,7 +21,7 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_EmptyDay_StartsAtDoctorStartHour()
     {
-        Appointment a = _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
 
         Assert.Equal(At(8), a.Start);
         Assert.Equal(20, a.Minutes);
@@ -31,9 +31,9 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_DoctorBusy_TakesFirstSlotAfterVisit()
     {
-        _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
 
-        Appointment a = _planner.Book(2, 1, "PROC", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(2, 1, "PROC", TestClinic.Tomorrow, false));
 
         Assert.Equal(At(8, 20), a.Start);
     }
@@ -46,7 +46,7 @@ public class SchedulePlannerBookTests
     [InlineData("XRAY", 20)]
     public void Book_VisitType_SetsDuration(string visitType, int minutes)
     {
-        Appointment a = _planner.Book(2, 1, visitType, TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(2, 1, visitType, TestClinic.Tomorrow, false));
 
         Assert.Equal(minutes, a.Minutes);
     }
@@ -54,10 +54,10 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_SlotsStartingAtOne_SkipsLunchHour()
     {
-        _planner.Book(1, 4, "PROC", TestClinic.Tomorrow, false);
-        _planner.Book(2, 4, "CONS", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 4, "PROC", TestClinic.Tomorrow, false));
+        _planner.Book(new BookingRequest(2, 4, "CONS", TestClinic.Tomorrow, false));
 
-        Appointment a = _planner.Book(3, 4, "FUP", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(3, 4, "FUP", TestClinic.Tomorrow, false));
 
         Assert.Equal(At(14), a.Start);
     }
@@ -68,9 +68,9 @@ public class SchedulePlannerBookTests
         // Характеризаційний тест. Обід перевіряється лише за годиною початку слота,
         // тож процедура 12:40-13:20 заходить на обідню перерву. Зафіксовано як
         // наявну поведінку, див. TD-01 у реєстрі боргу.
-        _planner.Book(1, 4, "PROC", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 4, "PROC", TestClinic.Tomorrow, false));
 
-        Appointment a = _planner.Book(2, 4, "PROC", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(2, 4, "PROC", TestClinic.Tomorrow, false));
 
         Assert.Equal(At(12, 40), a.Start);
     }
@@ -78,7 +78,7 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_NotUrgentProcedureInShortShift_NoFreeSlot()
     {
-        Appointment a = _planner.Book(2, 3, "PROC", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(2, 3, "PROC", TestClinic.Tomorrow, false));
 
         Assert.Null(a);
         Assert.Equal("No free slot for PROC", _planner.GetLastError());
@@ -87,7 +87,7 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_UrgentProcedureInShortShift_UsesReservedHalfHour()
     {
-        Appointment a = _planner.Book(2, 3, "PROC", TestClinic.Tomorrow, true);
+        Appointment a = _planner.Book(new BookingRequest(2, 3, "PROC", TestClinic.Tomorrow, true));
 
         Assert.Equal(At(15), a.Start);
         Assert.True(a.Urgent);
@@ -96,9 +96,9 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_PatientVisitWithin30Minutes_ShiftsStart()
     {
-        _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
 
-        Appointment a = _planner.Book(1, 2, "FUP", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(1, 2, "FUP", TestClinic.Tomorrow, false));
 
         Assert.Equal(At(8, 30), a.Start);
     }
@@ -106,9 +106,9 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_PatientHasVaccination_VaccinationDoesNotBlock()
     {
-        _planner.Book(1, 1, "VACC", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 1, "VACC", TestClinic.Tomorrow, false));
 
-        Appointment a = _planner.Book(1, 2, "FUP", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(1, 2, "FUP", TestClinic.Tomorrow, false));
 
         Assert.Equal(At(8), a.Start);
     }
@@ -116,7 +116,7 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_UnknownPatient_ReturnsNullWithReason()
     {
-        Appointment a = _planner.Book(42, 1, "CONS", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(42, 1, "CONS", TestClinic.Tomorrow, false));
 
         Assert.Null(a);
         Assert.Equal("Patient or doctor not found", _planner.GetLastError());
@@ -125,7 +125,7 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Book_PastDate_ReturnsNullWithReason()
     {
-        Appointment a = _planner.Book(1, 1, "CONS", DateTime.Today.AddDays(-1), false);
+        Appointment a = _planner.Book(new BookingRequest(1, 1, "CONS", DateTime.Today.AddDays(-1), false));
 
         Assert.Null(a);
         Assert.Equal("Date is in the past or doctor is on holiday", _planner.GetLastError());
@@ -136,7 +136,7 @@ public class SchedulePlannerBookTests
     {
         _planner.AddHoliday(1, TestClinic.Tomorrow, TestClinic.Tomorrow.AddDays(3));
 
-        Assert.Null(_planner.Book(1, 1, "CONS", TestClinic.Tomorrow.AddDays(2), false));
+        Assert.Null(_planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow.AddDays(2), false)));
     }
 
     [Fact]
@@ -145,13 +145,13 @@ public class SchedulePlannerBookTests
         // кінець відпустки не входить у неї: інтервал [from; to)
         _planner.AddHoliday(1, TestClinic.Tomorrow, TestClinic.Tomorrow.AddDays(3));
 
-        Assert.NotNull(_planner.Book(1, 1, "CONS", TestClinic.Tomorrow.AddDays(3), false));
+        Assert.NotNull(_planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow.AddDays(3), false)));
     }
 
     [Fact]
     public void Book_InsuredSenior_FeeWithBothDiscounts()
     {
-        Appointment a = _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
+        Appointment a = _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
 
         Assert.Equal(283.50m, a.Fee);
     }
@@ -159,7 +159,7 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Reschedule_FreeDay_CancelsOldAndBooksNew()
     {
-        Appointment old = _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
+        Appointment old = _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
 
         Appointment moved = _planner.Reschedule(old.Id, TestClinic.Tomorrow.AddDays(1));
 
@@ -170,7 +170,7 @@ public class SchedulePlannerBookTests
     [Fact]
     public void Reschedule_PastDay_KeepsOldStatus()
     {
-        Appointment old = _planner.Book(2, 3, "PROC", TestClinic.Tomorrow, true);
+        Appointment old = _planner.Book(new BookingRequest(2, 3, "PROC", TestClinic.Tomorrow, true));
 
         Appointment moved = _planner.Reschedule(old.Id, DateTime.Today.AddDays(-1));
 

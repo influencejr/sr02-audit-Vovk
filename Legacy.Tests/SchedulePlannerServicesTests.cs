@@ -16,9 +16,9 @@ public class SchedulePlannerServicesTests
     [Fact]
     public void BuildDayReport_TwoVisitsAndCancelled_ListsActiveVisits()
     {
-        _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
-        _planner.Book(3, 1, "XRAY", TestClinic.Tomorrow, false);
-        Appointment cancelled = _planner.Book(2, 1, "PROC", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
+        _planner.Book(new BookingRequest(3, 1, "XRAY", TestClinic.Tomorrow, false));
+        Appointment cancelled = _planner.Book(new BookingRequest(2, 1, "PROC", TestClinic.Tomorrow, false));
         cancelled.Status = AppointmentStatus.Cancelled;
 
         string report = _planner.BuildDayReport(1, TestClinic.Tomorrow);
@@ -40,7 +40,7 @@ public class SchedulePlannerServicesTests
     [Fact]
     public void GetLoadPercent_DoctorWithLunch_ExcludesLunchHour()
     {
-        _planner.Book(1, 1, "PROC", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 1, "PROC", TestClinic.Tomorrow, false));
 
         // 40 хв зайнято з 300 робочих (6 годин мінус обід), ціле ділення
         Assert.Equal(13, _planner.GetLoadPercent(1, TestClinic.Tomorrow));
@@ -67,7 +67,7 @@ public class SchedulePlannerServicesTests
     [Fact]
     public void Book_Success_PutsSmsToOutbox()
     {
-        _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
 
         Assert.Equal(
             "+380671234567: City Clinic #3: Petro Ivanenko, consultation with Dr. Olena Shevchenko"
@@ -97,7 +97,7 @@ public class SchedulePlannerServicesTests
         _planner.AddHoliday(1, TestClinic.Tomorrow.AddDays(5), TestClinic.Tomorrow.AddDays(6));
 
         Assert.Equal(2, _planner.CancelHolidays(1));
-        Assert.NotNull(_planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false));
+        Assert.NotNull(_planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false)));
     }
 
     [Fact]
@@ -109,9 +109,9 @@ public class SchedulePlannerServicesTests
     [Fact]
     public void PrintStats_AfterBookings_PrintsCounters()
     {
-        _planner.Book(1, 1, "CONS", TestClinic.Tomorrow, false);
-        _planner.Book(2, 3, "PROC", TestClinic.Tomorrow, true);
-        _planner.Book(3, 3, "PROC", TestClinic.Tomorrow, false);
+        _planner.Book(new BookingRequest(1, 1, "CONS", TestClinic.Tomorrow, false));
+        _planner.Book(new BookingRequest(2, 3, "PROC", TestClinic.Tomorrow, true));
+        _planner.Book(new BookingRequest(3, 3, "PROC", TestClinic.Tomorrow, false));
         StringWriter output = new StringWriter();
         TextWriter console = Console.Out;
         Console.SetOut(output);

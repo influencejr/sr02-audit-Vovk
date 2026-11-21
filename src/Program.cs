@@ -51,7 +51,7 @@ public class Program
     private static Appointment Book(SchedulePlanner planner, int patientId, int doctorId,
         string type, DateTime day, bool urgent)
     {
-        Appointment a = planner.Book(patientId, doctorId, type, day, urgent);
+        Appointment a = planner.Book(new BookingRequest(patientId, doctorId, type, day, urgent));
         string what = "p" + patientId + " -> dr" + doctorId + " " + type + (urgent ? "!" : "");
         if (a == null)
             Console.WriteLine(what + ": FAILED, " + planner.GetLastError());

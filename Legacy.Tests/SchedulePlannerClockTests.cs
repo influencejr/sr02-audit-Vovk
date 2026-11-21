@@ -18,7 +18,7 @@ public class SchedulePlannerClockTests
     {
         SchedulePlanner planner = new FixedClockPlanner(Monday1020);
 
-        Appointment a = planner.Book(2, 1, "CONS", Monday1020.Date, false);
+        Appointment a = planner.Book(new BookingRequest(2, 1, "CONS", Monday1020.Date, false));
 
         Assert.Equal(Monday1020.Date.AddHours(11), a.Start);
     }
@@ -28,7 +28,7 @@ public class SchedulePlannerClockTests
     {
         SchedulePlanner planner = new FixedClockPlanner(Monday1020.Date.AddHours(13).AddMinutes(10));
 
-        Assert.Null(planner.Book(2, 1, "CONS", Monday1020.Date, false));
+        Assert.Null(planner.Book(new BookingRequest(2, 1, "CONS", Monday1020.Date, false)));
         Assert.Equal("No free slot for CONS", planner.GetLastError());
     }
 
@@ -37,7 +37,7 @@ public class SchedulePlannerClockTests
     {
         SchedulePlanner planner = new FixedClockPlanner(Monday1020);
 
-        Assert.Null(planner.Book(2, 1, "CONS", Monday1020.Date.AddDays(-1), false));
+        Assert.Null(planner.Book(new BookingRequest(2, 1, "CONS", Monday1020.Date.AddDays(-1), false)));
     }
 
     private sealed class FixedClockPlanner : SchedulePlanner
