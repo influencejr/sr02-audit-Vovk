@@ -9,7 +9,8 @@ public class SmsNotifier
     private string clinicName = "City Clinic #3";
     private List<string> outbox = new List<string>();
 
-    public List<string> GetOutbox() { return outbox; }
+    // назовні черга лише для читання: додати SMS можна тільки через SendSms
+    public IReadOnlyList<string> GetOutbox() { return outbox.AsReadOnly(); }
     public int GetSmsCount() { return smsCounter; }
     public void ClearOutbox() { outbox.Clear(); }
 
