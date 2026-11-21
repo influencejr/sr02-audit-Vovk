@@ -39,15 +39,7 @@ public class SchedulePlanner
             lastError = "Date is in the past or doctor is on holiday";
             return null;
         }
-        int len;
-        switch (visitType)
-        {
-            case "CONS": len = 20; break;
-            case "FUP": len = 15; break;
-            case "PROC": len = 40; break;
-            case "VACC": len = 10; break;
-            default: len = 20; break;
-        }
+        int len = VisitTypes.Of(visitType).Minutes;
         DateTime? start = FindFreeSlot(d, patientId, day, len, urgent);
         if (start == null)
         {
@@ -183,15 +175,7 @@ public class SchedulePlanner
 
     public string FormatSms(Appointment a, Patient p, Doctor d)
     {
-        string vt;
-        switch (a.VisitType)
-        {
-            case "CONS": vt = "consultation"; break;
-            case "FUP": vt = "follow-up"; break;
-            case "PROC": vt = "procedure"; break;
-            case "VACC": vt = "vaccination"; break;
-            default: vt = "visit"; break;
-        }
+        string vt = VisitTypes.Of(a.VisitType).Name;
         return clinicName + ": " + p.FullName + ", " + vt + " with Dr. " + d.Name + " at "
             + a.Start.ToString("HH:mm") + ", room " + d.Room + (a.Urgent ? " (URGENT)" : "");
     }
@@ -242,15 +226,7 @@ public class SchedulePlanner
         int mins = 0;
         foreach (Appointment a in dayList)
         {
-            string vt;
-            switch (a.VisitType)
-            {
-                case "CONS": vt = "consultation"; break;
-                case "FUP": vt = "follow-up"; break;
-                case "PROC": vt = "procedure"; break;
-                case "VACC": vt = "vaccination"; break;
-                default: vt = "visit"; break;
-            }
+            string vt = VisitTypes.Of(a.VisitType).Name;
             r += "  " + a.Start.ToString("HH:mm") + " " + vt + ", "
                 + repo.FindPatient(a.PatientId).FullName + " [" + a.Status + "]\n";
             mins += a.Minutes;

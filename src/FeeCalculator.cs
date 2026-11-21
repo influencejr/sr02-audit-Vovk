@@ -7,15 +7,7 @@ public class FeeCalculator
 
     public decimal CalcFee(Appointment a, Patient p)
     {
-        decimal fee;
-        switch (a.VisitType)
-        {
-            case "CONS": fee = 450m; break;
-            case "FUP": fee = 300m; break;
-            case "PROC": fee = 900m; break;
-            case "VACC": fee = 250m; break;
-            default: fee = 450m; break;
-        }
+        decimal fee = VisitTypes.Of(a.VisitType).BasePrice;
         if (UseOldPrices)
             fee = fee * 0.8m;
         if (a.Urgent)
@@ -30,15 +22,7 @@ public class FeeCalculator
 
     public string FormatInvoice(Appointment a, Patient p)
     {
-        string vt;
-        switch (a.VisitType)
-        {
-            case "CONS": vt = "consultation"; break;
-            case "FUP": vt = "follow-up"; break;
-            case "PROC": vt = "procedure"; break;
-            case "VACC": vt = "vaccination"; break;
-            default: vt = "visit"; break;
-        }
+        string vt = VisitTypes.Of(a.VisitType).Name;
         string s = "Invoice #" + a.Id + ": " + p.FullName + ", " + vt;
         if (a.Urgent)
             s = s + " (urgent)";
