@@ -49,8 +49,6 @@ public class SchedulePlanner
             case "VACC": len = 10; break;
             default: len = 20; break;
         }
-        //if (day.DayOfWeek == DayOfWeek.Sunday)
-        //    { lastError = "Clinic is closed on Sunday"; return null; }
         List<Appointment> dayList = GetDoctorDay(doctorId, day);
         // записи пацієнта на цей день (до всіх лікарів)
         List<Appointment> mine = repo.FindForPatient(patientId, day);
@@ -292,9 +290,4 @@ public class SchedulePlanner
         Console.WriteLine("SMS sent: " + smsCounter);
     }
 
-    private bool IsLunchBreak(DateTime t, int minutes)
-    {
-        DateTime lunch = t.Date.AddHours(13);
-        return t < lunch.AddHours(1) && t.AddMinutes(minutes) > lunch;
-    }
 }
