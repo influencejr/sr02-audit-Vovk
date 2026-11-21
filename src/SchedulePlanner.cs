@@ -12,7 +12,6 @@ public class SchedulePlanner
     private ClinicRepository repo = ClinicRepository.Current;
     private FeeCalculator fees = new FeeCalculator();
     private string lastError = "";
-    private DateTime foundAt;
     private List<string> holidays = new List<string>(); // "doctorId|from|to"
     private string clinicName = "City Clinic #3";
     public static bool SmsEnabled = true;
@@ -49,50 +48,15 @@ public class SchedulePlanner
             case "VACC": len = 10; break;
             default: len = 20; break;
         }
-        List<Appointment> dayList = GetDoctorDay(doctorId, day);
-        // записи пацієнта на цей день (до всіх лікарів)
-        List<Appointment> mine = repo.FindForPatient(patientId, day);
-        DateTime from = day.Date.AddHours(d.StartHour);
-        DateTime to = day.Date.AddHours(d.EndHour);
-        if (!urgent)
-            to = to.AddMinutes(-UrgentReserveMinutes); // останні пів години - для термінових
-        if (day.Date == Now().Date && from < Now())
-            from = Now().Date.AddHours(Now().Hour + 1);
-        foundAt = DateTime.MinValue;
-        // перебір слотів по 5 хв: вільні і лікар, і пацієнт
-        for (DateTime t = from; t.AddMinutes(len) <= to; t = t.AddMinutes(SlotStepMinutes))
-        {
-            if (t.Hour == LunchHour)
-                continue;
-            bool ok = true;
-            foreach (Appointment a in dayList)
-            {
-                bool overlapsDoctorVisit = a.Start < t.AddMinutes(len) && t < a.Start.AddMinutes(a.Minutes);
-                if (overlapsDoctorVisit)
-                {
-                    ok = false;
-                    break;
-                }
-            }
-            foreach (Appointment a in mine)
-            {
-                if (Math.Abs((a.Start - t).TotalMinutes) < PatientGapMinutes)
-                    ok = false;
-            }
-            if (ok)
-            {
-                foundAt = t;
-                break;
-            }
-        }
-        if (foundAt == DateTime.MinValue)
+        DateTime? start = FindFreeSlot(d, patientId, day, len, urgent);
+        if (start == null)
         {
             failedCount++;
             lastError = "No free slot for " + visitType;
             return null;
         }
         Appointment ap = new Appointment { Id = ClinicRepository.NextId(), PatientId = patientId,
-            DoctorId = doctorId, VisitType = visitType, Start = foundAt, Minutes = len };
+            DoctorId = doctorId, VisitType = visitType, Start = start.Value, Minutes = len };
         ap.Urgent = urgent;
         ap.Status = AppointmentStatus.Booked;
         ap.Fee = fees.CalcFee(ap, p);
@@ -107,6 +71,47 @@ public class SchedulePlanner
     private bool IsBookableDay(int doctorId, DateTime day)
     {
         return day.Date >= Now().Date && !IsOnHoliday(doctorId, day);
+    }
+
+    // перший слот, вільний і для лікаря, і для пацієнта; null - вільного немає
+    private DateTime? FindFreeSlot(Doctor d, int patientId, DateTime day, int len, bool urgent)
+    {
+        List<Appointment> dayList = GetDoctorDay(d.Id, day);
+        // записи пацієнта на цей день (до всіх лікарів)
+        List<Appointment> mine = repo.FindForPatient(patientId, day);
+        DateTime from = day.Date.AddHours(d.StartHour);
+        DateTime to = day.Date.AddHours(d.EndHour);
+        if (!urgent)
+            to = to.AddMinutes(-UrgentReserveMinutes); // останні пів години - для термінових
+        if (day.Date == Now().Date && from < Now())
+            from = Now().Date.AddHours(Now().Hour + 1);
+        for (DateTime t = from; t.AddMinutes(len) <= to; t = t.AddMinutes(SlotStepMinutes))
+        {
+            if (t.Hour != LunchHour && IsDoctorFree(dayList, t, len) && IsPatientFree(mine, t))
+                return t;
+        }
+        return null;
+    }
+
+    private static bool IsDoctorFree(List<Appointment> dayList, DateTime t, int len)
+    {
+        foreach (Appointment a in dayList)
+        {
+            bool overlapsDoctorVisit = a.Start < t.AddMinutes(len) && t < a.Start.AddMinutes(a.Minutes);
+            if (overlapsDoctorVisit)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsPatientFree(List<Appointment> mine, DateTime t)
+    {
+        foreach (Appointment a in mine)
+        {
+            if (Math.Abs((a.Start - t).TotalMinutes) < PatientGapMinutes)
+                return false;
+        }
+        return true;
     }
 
     // шов для тестів: поточний час можна підмінити в нащадку
@@ -232,15 +237,7 @@ public class SchedulePlanner
         Doctor d = repo.FindDoctor(doctorId);
         if (d == null)
             return "";
-        List<Appointment> dayList = new List<Appointment>();
-        foreach (Appointment x in repo.Appointments)
-        {
-            if (x.DoctorId != doctorId || x.Start.Date != day.Date)
-                continue;
-            if (x.Status == AppointmentStatus.Cancelled)
-                continue;
-            dayList.Add(x);
-        }
+        List<Appointment> dayList = GetDoctorDay(doctorId, day);
         string r = "Day report: " + DescribeDoctor(d) + "\n";
         int mins = 0;
         foreach (Appointment a in dayList)
@@ -289,5 +286,4 @@ public class SchedulePlanner
             Console.WriteLine("  " + kv.Key + " = " + kv.Value);
         Console.WriteLine("SMS sent: " + smsCounter);
     }
-
 }
