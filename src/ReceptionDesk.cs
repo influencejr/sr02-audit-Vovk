@@ -2,6 +2,17 @@ namespace ClinicReception;
 
 public class ReceptionDesk
 {
+    // дозволені переходи: (дія, поточний стан) -> новий стан; для решти пар стан не змінюється
+    private static readonly Dictionary<(string Action, AppointmentStatus From), AppointmentStatus> Transitions =
+        new Dictionary<(string Action, AppointmentStatus From), AppointmentStatus>
+        {
+            [("confirm", AppointmentStatus.Booked)] = AppointmentStatus.Confirmed,
+            [("complete", AppointmentStatus.Confirmed)] = AppointmentStatus.Completed,
+            [("cancel", AppointmentStatus.Booked)] = AppointmentStatus.Cancelled,
+            [("cancel", AppointmentStatus.Confirmed)] = AppointmentStatus.Cancelled,
+            [("noshow", AppointmentStatus.Confirmed)] = AppointmentStatus.NoShow,
+        };
+
     private ClinicRepository repo = ClinicRepository.Current;
     public string LastMessage = "";
 
@@ -42,27 +53,9 @@ public class ReceptionDesk
             return false;
         }
         AppointmentStatus old = a.Status;
-        switch (action)
-        {
-            case "confirm":
-                if (a.Status == AppointmentStatus.Booked)
-                    a.Status = AppointmentStatus.Confirmed;
-                break;
-            case "complete":
-                if (a.Status == AppointmentStatus.Cancelled)
-                    throw new InvalidOperationException("Cannot complete a cancelled visit");
-                if (a.Status == AppointmentStatus.Confirmed)
-                    a.Status = AppointmentStatus.Completed;
-                break;
-            case "cancel":
-                if (a.Status == AppointmentStatus.Booked || a.Status == AppointmentStatus.Confirmed)
-                    a.Status = AppointmentStatus.Cancelled;
-                break;
-            case "noshow":
-                if (a.Status == AppointmentStatus.Confirmed && a.Start < DateTime.Now)
-                    a.Status = AppointmentStatus.NoShow;
-                break;
-        }
+        if (action == "complete" && old == AppointmentStatus.Cancelled)
+            throw new InvalidOperationException("Cannot complete a cancelled visit");
+        a.Status = NextStatus(action, old, a.Start);
         // статус не змінився = перехід заборонений
         if (a.Status == old)
         {
@@ -72,5 +65,15 @@ public class ReceptionDesk
         LastMessage = "Appointment #" + a.Id + ": " + old + " -> " + a.Status;
         AuditLog.Write(LastMessage);
         return true;
+    }
+
+    private static AppointmentStatus NextStatus(string action, AppointmentStatus current, DateTime start)
+    {
+        if (!Transitions.TryGetValue((action, current), out AppointmentStatus next))
+            return current;
+        // неявку можна позначити лише після початку прийому
+        if (next == AppointmentStatus.NoShow && start >= DateTime.Now)
+            return current;
+        return next;
     }
 }
